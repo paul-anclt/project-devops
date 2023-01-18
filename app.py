@@ -9,5 +9,6 @@ def hello_world():
     return current_app.send_static_file('index.html')
 
 if __name__ == '__main__':
-    port = int(os.getenv('PORT'))
+    DEFAULT_PORT = 5000
+    port = int(os.getenv('PORT',DEFAULT_PORT))
     app.run(debug=True,host='0.0.0.0', port=port)
