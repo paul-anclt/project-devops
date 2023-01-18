@@ -14,7 +14,7 @@ pipeline {
         }
         stage('Push on docker hub') {
             steps {
-                echo 'Pushing....'
+                echo 'Pushing on docker hub....'
             }
         }
         stage('Deploy DEV') {
