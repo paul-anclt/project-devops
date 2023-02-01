@@ -16,18 +16,28 @@ pipeline {
         }
         stage('Building') {
             steps {
-                sh 'docker build -t $myimage .'
+                script {
+                    app = docker.build("$myimage")
+                }
+                //sh 'docker build -t $myimage .'
             }
         }
         stage('Test') {
             steps {
-                echo 'Test'
+                script {
+                    app.inside {
+                        sh 'python3 test.py'
+                    }
+                }
             }
         }
         stage('Push on docker hub') {
             steps {
                 sh "echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin"
-                sh "docker push $myimage"            
+                //sh "docker push $myimage"
+                script {
+                    app.push()        
+                }
             }
         }
         stage('Deploy DEV') {
