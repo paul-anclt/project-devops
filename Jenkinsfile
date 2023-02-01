@@ -42,12 +42,32 @@ pipeline {
         }
         stage('Deploy DEV') {
             steps {
-                echo 'Deploying DEV....'
+                /* Deploy a container for dev (ensuring to stop and remove it first) */
+                sh 'docker ps -f name=^dev$ -q | xargs --no-runif-empty docker container stop'
+                sh 'docker container ls -a -fname=^dev$ -q |xargs -r docker container rm'
+                script {
+                    app.run('--restart always --name dev -p 5000:5000') 
+                }
+            }
+        }
+        stage('Testing DEV') {
+            steps {
+                echo 'TODO: Do some tests....'
             }
         }
         stage('Deploy PROD') {
             steps {
-                echo 'Deploying PROD....'
+                /* Deploy a container for PROD */
+                sh 'docker ps -f name=^prod$ -q | xargs --no-run-ifempty docker container stop'
+                sh 'docker container ls -a -fname=^prod$ -q | xargs -r docker container rm'
+                script {
+                    app.run('--restart always --name prod -p 5001:5000') 
+                }
+            }
+        }
+        stage('Testing PROD') {
+            steps {
+                echo 'TODO: Do some tests....'
             }
         }
         stage('Discord Notification'){
