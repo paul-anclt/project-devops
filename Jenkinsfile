@@ -3,6 +3,7 @@ pipeline {
 
 	environment {
         DOCKERHUB_CREDENTIALS=credentials('dockerhub-pancele')
+        WEBHOOK_URL=credentials('discord_webhook_url')
         def myimage = "pancele/simple-flask-app"
 	}
     stages {
@@ -37,6 +38,11 @@ pipeline {
         stage('Deploy PROD') {
             steps {
                 echo 'Deploying PROD....'
+            }
+        }
+        stage('Discord Notification'){
+            steps {
+                discordSend description: "Jenkins Pipeline Build", footer: "Footer Text", link: env.BUILD_URL, result: currentBuild.currentResult, title: JOB_NAME, webhookURL: "$WEBHOOK_URL"
             }
         }
     }
