@@ -34,7 +34,7 @@ pipeline {
                 sh "echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin"
                 //sh "docker push $myimage"
                 script {
-                    app.push()        
+                    app.push("$currentBuild.number")        
                 }
             }
         }
@@ -50,7 +50,24 @@ pipeline {
         }
         stage('Testing DEV') {
             steps {
-                echo 'TODO: Do some tests....'
+                script {
+                    final String ipDev = sh(script: 'docker inspect -f \'{{ .NetworkSettings.IPAddress }}\' dev', returnStdout: true).trim()
+
+                    final String urlDev = "${ipDev}:5000"
+                    //final String response = sh(script: "curl -Is $urlDev", returnStdout: true).trim()
+                    //echo response
+
+                    final String scriptDev = "curl -Is $urlDev | head -n 1 | awk '{print \$2}'"
+                    
+                    HealthCheck = sh( script: "$scriptDev", returnStdout: true ).trim()
+        
+                    if (HealthCheck.equals("200")) {
+                    
+                    } else {
+                        sh "echo ERROR ${HealthCheck} ; exit 1" // this fails the stage
+                    }
+                    
+                }
             }
         }
         stage('Deploy PROD') {
@@ -65,13 +82,26 @@ pipeline {
         }
         stage('Testing PROD') {
             steps {
-                echo 'TODO: Do some tests....'
+                script {
+                    final String ipProd = sh(script: 'docker inspect -f \'{{ .NetworkSettings.IPAddress }}\' prod', returnStdout: true).trim()
+
+                    final String urlProd = "${ipProd}:5000"
+
+                    final String scriptProd = "curl -Is $urlProd | head -n 1 | awk '{print \$2}'"
+                    
+                    HealthCheck = sh( script: "$scriptProd", returnStdout: true ).trim()
+                    if (HealthCheck.equals("200")) {
+                    
+                    } else {
+                        sh "echo ERROR ${HealthCheck} ; exit 1" // this fails the stage
+                    }
+                }
             }
         }
     }
     post {
         always {
-            discordSend description: "Jenkins Pipeline Build", footer: "Footer Text", link: env.BUILD_URL, result: currentBuild.currentResult, title: JOB_NAME, webhookURL: "$WEBHOOK_URL"
+            discordSend description: "Jenkins Pipeline Build N°$currentBuild.number", footer: "", link: env.BUILD_URL, result: currentBuild.currentResult, title: JOB_NAME, webhookURL: "$WEBHOOK_URL"
         }
     }
 }
